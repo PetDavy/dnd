@@ -1,0 +1,13 @@
+.App {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.content {
+  margin-top: 20px;
+}
+
+.nav-item {
+  max-width: 220px;
+  width: 100%;
+}
