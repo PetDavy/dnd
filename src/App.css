@@ -10,4 +10,21 @@
 .nav-item {
   max-width: 220px;
   width: 100%;
+  display: flex;
+  align-items: center;
+
+  cursor: pointer;
+  padding: 10px; 
+  border: 1px solid yellow;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.nav-item-point {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 1px solid #333;
+  margin-right: 12px;
 }

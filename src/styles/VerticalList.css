@@ -1,4 +1,4 @@
-.vertical-list ul {
+.vertical-list {
   flex-shrink: 1;
   list-style-type: none;
   padding: 10px;
@@ -10,12 +10,4 @@
   flex-direction: column;
   gap: 8px;
   max-width: 240px;
-}
-
-.vertical-list li {
-  cursor: pointer;
-  padding: 10px; 
-  border: 1px solid yellow;
-  background-color: #f4f4f4;
-  color: #333
 }

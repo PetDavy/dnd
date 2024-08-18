@@ -5,7 +5,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 
 import '../styles/VerticalList.css';
 
-const IDS = ['Home', 'About', 'Services', 'Contact', 'Profile'];
+const IDS = ['Home-v', 'About-v', 'Services-v', 'Contact-v', 'Profile-v'];
 
 const VerticalList: React.FC = () => {
   const [listItems, setListItems] = useState(IDS);

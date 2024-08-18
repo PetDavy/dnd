@@ -1,20 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useDnd } from './useDnd';
 import '../styles/Navbar.css';
+// const IDS = ['Home', 'About', 'Services', 'Contact', 'Profile'];
+const IDS = ['Home', 'About'];
 
 const Navbar: React.FC = () => {
-  const navItems = ['Home', 'About', 'Services', 'Contact', 'Profile'];
+  const { Container, ItemWrapper } = useDnd();
+
+  const [items, setItems] = useState(IDS);
 
   return (
-    <nav className="navbar">
-      <ul>
-        {navItems.map((item, index) => (
-          <li key={index} className="nav-item">
+    <Container
+      id="navbar"
+      className="navbar"
+      listItems={items}
+      setListItems={setItems}
+    >
+      {items.map((item) => (
+        <ItemWrapper
+          key={`navbar&${item}`}
+          id={item}
+          containerId="navbar"
+          className="navbar-item"
+        >
+          <div className="nav-item">
+            <div className="nav-item-point" />
             {item}
-          </li>
-        ))}
-      </ul>
-    </nav>
+          </div>
+        </ItemWrapper>
+      ))}
+    </Container>
   );
-}
+};
 
 export default Navbar;
