@@ -1,0 +1,16 @@
+.navbar ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar li {
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  border: 1px solid yellow;
+  cursor: pointer;
+  background-color: #f4f4f4;
+  color: #333;
+}
