@@ -4,6 +4,7 @@ import {
   RefObject,
   useContext,
   useEffect,
+  useMemo,
   useRef,
 } from 'react';
 import {
@@ -13,6 +14,7 @@ import {
   dndStoreAtom,
   setActiveItemAtom,
   updateOrderAtom,
+  updateSavedItemsAtom,
 } from '../store/dnd.store';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { motion, PanInfo } from 'framer-motion';
@@ -21,14 +23,21 @@ import { IdType } from '../types/types';
 
 type DndContextType = {
   contextId: string;
+  keepItems?: boolean;
 };
 
 export const DndContext = createContext<DndContextType | null>(null);
 
-export function useDnd() {
+export function useDnd({ id }: { id: string }) {
+  const dndStore = useAtomValue(dndStoreAtom);
+  const savedItems = useMemo(() => (
+    dndStore.contexts[id]?.savedItems || []
+  ), [dndStore.contexts[id]?.savedItems]);
+
   return {
     DndProvider,
     ItemWrapper,
+    savedItems,
   };
 }
 
@@ -38,6 +47,7 @@ interface DndProviderProps<T extends IdType> extends PropsWithChildren {
   items: T[];
   setItems: (items: T[]) => void;
   connectedContexts?: string[];
+  keepItems?: boolean;
 }
 
 function DndProvider<T extends IdType>({
@@ -47,6 +57,7 @@ function DndProvider<T extends IdType>({
   items,
   setItems,
   connectedContexts,
+  keepItems,
 }: DndProviderProps<T>) {
   const dndStore = useAtomValue(dndStoreAtom);
 
@@ -54,7 +65,7 @@ function DndProvider<T extends IdType>({
   const updateOrder = useSetAtom(updateOrderAtom);
   const cleanUpDndItems = useSetAtom(cleanUpDndItemsAtom);
 
-  const context = { contextId: id };
+  const context = { contextId: id, keepItems };
 
   useEffect(() => {
     addDndContext({
@@ -64,6 +75,7 @@ function DndProvider<T extends IdType>({
       itemsOrder: [],
       connectedContexts,
       setItems: setItems as (items: IdType[]) => void,
+      savedItems: items,
     });
   }, []);
 
@@ -106,6 +118,7 @@ function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) 
   const itemId = String(item.id);
   const dndContext = useContext(DndContext);
   const contextId = dndContext?.contextId || '';
+  const keepItems = dndContext?.keepItems;
 
   const dndStore = useAtomValue(dndStoreAtom);
   const currDndContext = dndStore?.contexts?.[contextId];
@@ -113,11 +126,13 @@ function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) 
 
   const addDndItem = useSetAtom(addDndItemAtom);
   const setActiveItem = useSetAtom(setActiveItemAtom);
+  const updateSavedItems = useSetAtom(updateSavedItemsAtom);
 
   const {
     collisionWithOwnContainer,
     collisionWithConnectedContainers,
-    handleDragOutOfContainers
+    handleDragOutOfContainers,
+    detectDuplicate,
   } = useDndCollisions({ id: itemId, contextId });
 
   const isFakeItem = itemId.startsWith('fake-');
@@ -141,7 +156,11 @@ function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) 
 
   const handleDragEnd = (event: MouseEvent, info: PanInfo) => {
     const hoveredContext = collisionWithConnectedContainers(info);
-    if (!hoveredContext) return;
+    const hoveredContextItems = Object.values(hoveredContext?.items || {});
+    if (!hoveredContext || detectDuplicate(hoveredContextItems, itemId)) {
+      updateItemsSortMutation();
+      return;
+    }
 
     const itemsOrder = hoveredContext.itemsOrder;
     const items = hoveredContext.items;
@@ -159,19 +178,51 @@ function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) 
       if (item.startsWith('fake-')) return item.replace('fake-', ''); 
       return item;
     });
-    const newOwnItemsOrder = [...ownItemsOrder];
 
-    newOwnItemsOrder.splice(ownItemIndex, 1);
+    const newOwnItemsOrder = [...ownItemsOrder];
+    const copyItemId = `copy-${itemId}`;
+
+    if (keepItems) {
+      newOwnItemsOrder[ownItemIndex] = copyItemId;
+    } else {
+      newOwnItemsOrder.splice(ownItemIndex, 1);
+    }
 
     // for new item in hovered context we take the item from props
     // since there is no new item in hoveredContext.items
     const newHoveredItems = newItemsOrder.map((id) => items[id]?.item || item);
-    const newOwnItems = newOwnItemsOrder.map((id) => ownItems[id].item);
+    updateSavedItems({ contextId: hoveredContext.id, items: newHoveredItems });
+
+    // if keepItems is true we add a copy of the item to the ownItems
+    const newOwnItems = newOwnItemsOrder.map((id) => ownItems[id]?.item || { ...item, id: copyItemId });
+    updateSavedItems({ contextId: currDndContext.id, items: newOwnItems });
 
     hoveredSetItems(newHoveredItems);
     ownSetItems(newOwnItems);
     setActiveItem(null);
   };
+
+  const updateItemsSortMutation  = () => {
+    // update saved items if items have different order
+
+    const savedItems = dndStore.contexts[contextId].savedItems;
+    const itemsOrder = dndStore.contexts[contextId].itemsOrder;
+    if (!savedItems || !itemsOrder) return;
+
+    let isSameOrder: boolean = true;
+
+    savedItems.forEach((item, index) => {
+      if (item.id !== itemsOrder[index]) {
+        isSameOrder = false;
+      }
+    })
+
+    if (!isSameOrder) {
+      const sortedItems = itemsOrder.map((id) => savedItems.find((item) => item.id === id) as T);
+      updateSavedItems({ contextId, items: sortedItems });
+    }
+
+  }
 
   return (
     <div ref={itemRef} style={{ opacity: isFakeItem ? 0 : 1 }}>

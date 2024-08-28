@@ -1,5 +1,5 @@
 import { PanInfo } from 'framer-motion';
-import { dndStoreAtom, DndStoreContext } from '../store/dnd.store';
+import { DndItem, dndStoreAtom, DndStoreContext } from '../store/dnd.store';
 import { useAtomValue } from 'jotai';
 import { IdType } from '../types/types';
 
@@ -80,7 +80,7 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
     
     // prevent adding item to the same context 
     // if it already exists as original or as a new copy item
-    if (items.some((item) => id === item.id || (id.startsWith('new-') && id.includes(item.id)))) return;
+    if (detectDuplicate(items, id)) return;
    
     items.forEach((item) => {
       if (!item.ref || item.id.startsWith('fake')) return;
@@ -127,10 +127,19 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
     })
   }
 
+  const detectDuplicate = <T extends IdType>(items: DndItem<T>[], id: string) => {
+    return items.some(
+      (item) => id === item.id ||
+      (id.startsWith('copy-') && id.includes(item.id)) ||
+      (item.id.startsWith('copy-') && item.id.includes(id))
+    );
+  }
+
   return {
     collisionWithOwnContainer,
     collisionWithConnectedContainers,
     handleDragOutOfContainers,
+    detectDuplicate,
   }
 }
 

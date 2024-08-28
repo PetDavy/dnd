@@ -1,15 +1,19 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDnd } from './useDnd';
 import '../styles/Navbar.css';
 // const IDS = ['Home', 'About', 'Services', 'Contact', 'Profile'];
 const IDS = ['Home', 'About'];
 
 const Navbar: React.FC = () => {
-  const { DndProvider, ItemWrapper } = useDnd();
+  const { DndProvider, ItemWrapper, savedItems } = useDnd({ id: 'navbar'});
 
   const [items, setItems] = useState(IDS.map((id) => ({ id })));
 
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log('savedItems', savedItems);
+  }, [savedItems]);
 
   return (
     <DndProvider
@@ -17,7 +21,6 @@ const Navbar: React.FC = () => {
       items={items}
       listRef={listRef}
       setItems={setItems}
-      connectedContexts={['vertical-list']}
     >
       <div className="navbar" ref={listRef}>
         {items.map((item) => (

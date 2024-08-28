@@ -6,7 +6,7 @@ const IDS = ['Home-v', 'About-v', 'Services-v', 'Contact-v', 'Profile-v'];
 import '../styles/VerticalList.css';
 
 function VerticalListDnd() {
-  const { DndProvider, ItemWrapper } = useDnd();
+  const { DndProvider, ItemWrapper } = useDnd({ id: 'vertical-list'});
   const [items, setItems] = useState(IDS.map((id) => ({ id })));
 
   const listRef = useRef<HTMLDivElement>(null);
@@ -18,6 +18,7 @@ function VerticalListDnd() {
       items={items}
       setItems={setItems}
       connectedContexts={['navbar']}
+      keepItems
     >
       <div
         id="vertical-list"

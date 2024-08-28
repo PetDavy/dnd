@@ -13,6 +13,7 @@ export type DndStoreContext<T extends IdType> = {
   itemsOrder: string[];
   connectedContexts?: string[];
   setItems: (items: T[]) => void;
+  savedItems: T[];
 }
 
 export type DndItem<T extends IdType> = {
@@ -33,6 +34,25 @@ export const setActiveItemAtom = atom(null, (get, set, id: string | null) => {
   set(dndStoreAtom, {
     ...get(dndStoreAtom),
     activeItem: id,
+  });
+});
+
+export const updateSavedItemsAtom = atom(null, <T extends IdType>(get, set, { contextId, items }: { contextId: string, items: T[] }) => {
+  const store = get(dndStoreAtom);
+
+  const context = store.contexts[contextId];
+
+  if (!context) return;
+
+  set(dndStoreAtom, {
+    ...store,
+    contexts: {
+      ...store.contexts,
+      [contextId]: {
+        ...context,
+        savedItems: items,
+      }
+    }
   });
 });
 
