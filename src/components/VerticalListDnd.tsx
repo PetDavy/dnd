@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { useDnd } from './useDnd';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const IDS = ['Home-v', 'About-v', 'Services-v', 'Contact-v', 'Profile-v'];
 
@@ -8,7 +7,7 @@ import '../styles/VerticalList.css';
 
 function VerticalListDnd() {
   const { DndProvider, ItemWrapper } = useDnd();
-  const [items, setItems] = useState(IDS);
+  const [items, setItems] = useState(IDS.map((id) => ({ id })));
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -26,17 +25,11 @@ function VerticalListDnd() {
         ref={listRef}
       >
         {items.map((item) => (
-          <ItemWrapper key={item} id={item}>
-            <AnimatePresence>
-              <motion.div
-                className="nav-item"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <div className="nav-item-point" />
-                {item}
-              </motion.div>
-            </AnimatePresence>
+          <ItemWrapper key={item.id} item={item}>
+            <div className="nav-item">
+              <div className="nav-item-point" />
+              <span>{item.id}</span> 
+            </div>
           </ItemWrapper>
         ))}
       </div>

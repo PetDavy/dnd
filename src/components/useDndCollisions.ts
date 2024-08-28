@@ -1,6 +1,7 @@
 import { PanInfo } from 'framer-motion';
 import { dndStoreAtom, DndStoreContext } from '../store/dnd.store';
 import { useAtomValue } from 'jotai';
+import { IdType } from '../types/types';
 
 interface UseDndCollisionsParams {
   id: string;
@@ -48,7 +49,8 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
         const newItemsOrder = [...itemsOrder];
         newItemsOrder.splice(itemIndex, 1);
         newItemsOrder.splice(neighborIndex, 0, id);
-        setItems(newItemsOrder);
+        const newItems = newItemsOrder.map((id) => currDndContext.items[id].item);
+        setItems(newItems);
       }
     })
   }
@@ -70,7 +72,7 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
     return hoveredContext;
   }
 
-  const collisionWithOtherContextItem = (info: PanInfo, context: DndStoreContext) => {
+  const collisionWithOtherContextItem = <T extends IdType>(info: PanInfo, context: DndStoreContext<T>) => {
     const items = Object.values(context.items);
     const itemsOrder = context.itemsOrder;
     const fakeItemIndex = itemsOrder.indexOf(`fake-${id}`);
@@ -86,15 +88,20 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
       if (containsPoint(item.ref, info.point.x, info.point.y)) {
         const itemIndex = itemsOrder.indexOf(item.id);
         const newItemsOrder = [...itemsOrder];
+        const dragingItem = currDndContext.items[id].item;
+        const fakeId = `fake-${id}`;
 
         if (fakeItemIndex !== -1) {
           // remove fake item from old position
           newItemsOrder.splice(fakeItemIndex, 1);
         }
 
-        newItemsOrder.splice(itemIndex, 0, `fake-${id}`);
+        newItemsOrder.splice(itemIndex, 0, fakeId);
+        // get new item from current context since there is no dragging item in the other context
+        // set fake id to the new item for preventing dubplicates and to detect the fake item wrapper
+        const newItems = newItemsOrder.map((currId) => context.items[currId]?.item || { ...dragingItem, id: fakeId });
 
-        otherSetItems(newItemsOrder);
+        otherSetItems(newItems);
       }
     });
   }
@@ -114,7 +121,8 @@ export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
       if (fakeItemIndex !== -1) {
         const newItemsOrder = [...itemsOrder];
         newItemsOrder.splice(fakeItemIndex, 1);
-        setItems(newItemsOrder);
+        const newItems = newItemsOrder.map((id) => context.items[id].item);
+        setItems(newItems);
       }
     })
   }

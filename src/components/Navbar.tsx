@@ -7,7 +7,7 @@ const IDS = ['Home', 'About'];
 const Navbar: React.FC = () => {
   const { DndProvider, ItemWrapper } = useDnd();
 
-  const [items, setItems] = useState(IDS);
+  const [items, setItems] = useState(IDS.map((id) => ({ id })));
 
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -21,10 +21,10 @@ const Navbar: React.FC = () => {
     >
       <div className="navbar" ref={listRef}>
         {items.map((item) => (
-          <ItemWrapper key={item} id={item}>
+          <ItemWrapper key={item.id} item={item}>
             <div className="nav-item">
               <div className="nav-item-point" />
-              {item}
+              <span>{item.id}</span> 
             </div>
           </ItemWrapper>
         ))}

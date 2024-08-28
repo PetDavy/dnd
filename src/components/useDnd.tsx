@@ -17,6 +17,7 @@ import {
 import { useAtomValue, useSetAtom } from 'jotai';
 import { motion, PanInfo } from 'framer-motion';
 import { useDndCollisions } from './useDndCollisions';
+import { IdType } from '../types/types';
 
 type DndContextType = {
   contextId: string;
@@ -31,22 +32,22 @@ export function useDnd() {
   };
 }
 
-interface DndProviderProps extends PropsWithChildren {
+interface DndProviderProps<T extends IdType> extends PropsWithChildren {
   id: string;
   listRef: RefObject<HTMLDivElement>;
-  items: string[];
-  setItems: (items: string[]) => void;
+  items: T[];
+  setItems: (items: T[]) => void;
   connectedContexts?: string[];
 }
 
-function DndProvider({
+function DndProvider<T extends IdType>({
   children,
   id,
   listRef,
   items,
   setItems,
   connectedContexts,
-}: DndProviderProps) {
+}: DndProviderProps<T>) {
   const dndStore = useAtomValue(dndStoreAtom);
 
   const addDndContext = useSetAtom(addDndContextAtom);
@@ -62,7 +63,7 @@ function DndProvider({
       items: {},
       itemsOrder: [],
       connectedContexts,
-      setItems,
+      setItems: setItems as (items: IdType[]) => void,
     });
   }, []);
 
@@ -73,13 +74,13 @@ function DndProvider({
 
     let isSameOrder = contextItemsOrder.length === items.length;
     items.forEach((item, index) => {
-      if (item !== contextItemsOrder[index]) {
+      if (item.id !== contextItemsOrder[index]) {
         isSameOrder = false;
       }
     });
 
     if (!isSameOrder) {
-      updateOrder({ contextId: id, itemsOrder: items });
+      updateOrder({ contextId: id, itemsOrder: items.map((item) => String(item.id)) });
     }
   }, [items, dndStore.contexts[id]]);
 
@@ -96,14 +97,19 @@ function DndProvider({
   );
 }
 
-function ItemWrapper({ children, id }: PropsWithChildren & { id: string }) {
+interface ItemWrapperProps<T extends IdType> extends PropsWithChildren {
+  item: T;
+}
+
+function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) {
   const itemRef = useRef<HTMLDivElement>(null);
+  const itemId = String(item.id);
   const dndContext = useContext(DndContext);
   const contextId = dndContext?.contextId || '';
 
   const dndStore = useAtomValue(dndStoreAtom);
   const currDndContext = dndStore?.contexts?.[contextId];
-  const currDndItem = useAtomValue(dndStoreAtom)?.contexts?.[contextId]?.items[id];
+  const currDndItem = useAtomValue(dndStoreAtom)?.contexts?.[contextId]?.items[itemId];
 
   const addDndItem = useSetAtom(addDndItemAtom);
   const setActiveItem = useSetAtom(setActiveItemAtom);
@@ -112,18 +118,18 @@ function ItemWrapper({ children, id }: PropsWithChildren & { id: string }) {
     collisionWithOwnContainer,
     collisionWithConnectedContainers,
     handleDragOutOfContainers
-  } = useDndCollisions({ id, contextId });
+  } = useDndCollisions({ id: itemId, contextId });
 
-  const isFakeItem = id.startsWith('fake-');
+  const isFakeItem = itemId.startsWith('fake-');
 
   useEffect(() => {
     if (itemRef.current && !currDndItem?.ref && contextId) {
-      addDndItem({ contextId, item: { id, ref: itemRef.current } });
+      addDndItem({ contextId, item: { id: itemId, ref: itemRef.current, item } });
     }
   }, [itemRef.current, currDndItem, contextId]);
 
   const handleDragStart = () => {
-    setActiveItem(id);
+    setActiveItem(itemId);
   };
 
   const handleDragItem = (event: MouseEvent, info: PanInfo) => {
@@ -138,10 +144,13 @@ function ItemWrapper({ children, id }: PropsWithChildren & { id: string }) {
     if (!hoveredContext) return;
 
     const itemsOrder = hoveredContext.itemsOrder;
+    const items = hoveredContext.items;
     const ownItemsOrder = currDndContext.itemsOrder;
+    const ownItems = currDndContext.items;
+  
     const hoveredSetItems = hoveredContext.setItems;
     const ownSetItems = currDndContext.setItems;
-    const ownItemIndex = ownItemsOrder.indexOf(id);
+    const ownItemIndex = ownItemsOrder.indexOf(itemId);
 
     if (ownItemIndex === -1) return;
     
@@ -154,15 +163,20 @@ function ItemWrapper({ children, id }: PropsWithChildren & { id: string }) {
 
     newOwnItemsOrder.splice(ownItemIndex, 1);
 
-    hoveredSetItems(newItemsOrder);
-    ownSetItems(newOwnItemsOrder);
+    // for new item in hovered context we take the item from props
+    // since there is no new item in hoveredContext.items
+    const newHoveredItems = newItemsOrder.map((id) => items[id]?.item || item);
+    const newOwnItems = newOwnItemsOrder.map((id) => ownItems[id].item);
+
+    hoveredSetItems(newHoveredItems);
+    ownSetItems(newOwnItems);
     setActiveItem(null);
   };
 
   return (
     <div ref={itemRef} style={{ opacity: isFakeItem ? 0 : 1 }}>
       <motion.div
-        layoutId={id}
+        layoutId={itemId}
         drag
         dragElastic={1}
         dragMomentum={false}
