@@ -1,35 +1,36 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useDnd } from './useDnd';
 import '../styles/Navbar.css';
 // const IDS = ['Home', 'About', 'Services', 'Contact', 'Profile'];
 const IDS = ['Home', 'About'];
 
 const Navbar: React.FC = () => {
-  const { Container, ItemWrapper } = useDnd();
+  const { DndProvider, ItemWrapper } = useDnd();
 
   const [items, setItems] = useState(IDS);
 
+  const listRef = useRef<HTMLDivElement>(null);
+
   return (
-    <Container
+    <DndProvider
       id="navbar"
-      className="navbar"
-      listItems={items}
-      setListItems={setItems}
+      items={items}
+      listRef={listRef}
+      setItems={setItems}
+      connectedContexts={['vertical-list']}
     >
-      {items.map((item) => (
-        <ItemWrapper
-          key={`navbar&${item}`}
-          id={item}
-          containerId="navbar"
-          className="navbar-item"
-        >
-          <div className="nav-item">
-            <div className="nav-item-point" />
-            {item}
-          </div>
-        </ItemWrapper>
-      ))}
-    </Container>
+      <div className="navbar" ref={listRef}>
+        {items.map((item) => (
+          <ItemWrapper key={item} id={item}>
+            <div className="nav-item">
+              <div className="nav-item-point" />
+              {item}
+            </div>
+          </ItemWrapper>
+        ))}
+      </div>
+
+    </DndProvider>
   );
 };
 
