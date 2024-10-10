@@ -21,6 +21,7 @@ const Navbar: React.FC = () => {
       items={items}
       listRef={listRef}
       setItems={setItems}
+      connectedContexts={['vertical-list']}
     >
       <div className="navbar" ref={listRef}>
         {items.map((item) => (

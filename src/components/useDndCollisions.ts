@@ -10,7 +10,6 @@ interface UseDndCollisionsParams {
 
 export function useDndCollisions({ id, contextId }: UseDndCollisionsParams) {
   const dndStore = useAtomValue(dndStoreAtom);
-  // console.log('dndStore', dndStore)
   const currDndContext = dndStore?.contexts?.[contextId];
   const currDndItem = useAtomValue(dndStoreAtom)?.contexts?.[contextId]?.items[id];
 

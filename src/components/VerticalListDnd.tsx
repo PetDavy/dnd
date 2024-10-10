@@ -18,7 +18,7 @@ function VerticalListDnd() {
       items={items}
       setItems={setItems}
       connectedContexts={['navbar']}
-      keepItems
+      // keepItems
     >
       <div
         id="vertical-list"

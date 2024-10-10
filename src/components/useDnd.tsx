@@ -225,15 +225,15 @@ function ItemWrapper<T extends IdType>({ children, item }: ItemWrapperProps<T>) 
   }
 
   return (
-    <div ref={itemRef} style={{ opacity: isFakeItem ? 0 : 1 }}>
+    <div ref={itemRef} style={{ opacity: isFakeItem ? 0 : 1, border: '1px solid red' }}>
       <motion.div
         layoutId={itemId}
         drag
         dragElastic={1}
         dragMomentum={false}
         dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-        onDrag={handleDragItem}
         onDragStart={handleDragStart}
+        onDrag={handleDragItem}
         onDragEnd={handleDragEnd}
       >
         {children}
